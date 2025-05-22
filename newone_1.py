@@ -1959,79 +1959,87 @@ if st.session_state.step == 7:
         st.button("신청서 출력", on_click=lambda: st.session_state.update(step=8))
 
 # STEP 8: 신청양식 PDF 출력용 결과 페이지
-# Step7의 도출 결과를 기반으로, 각 변경유형에 대해 보고유형 및 필요서류를 종합 정리하여 PDF 생성/출력 기능 제공
+# step7 → step8 전환
+def go_to_step8():
+    st.session_state.step = 8
 
-import streamlit as st
-from fpdf import FPDF
-import os
-import uuid
-
-if "step" not in st.session_state:
-    st.session_state.step = 7
-
-if "step7_results" not in st.session_state:
-    st.session_state.step7_results = [
-        {
-            "title": "3.2.S.1 일반정보\n1. 원료의약품 명칭변경",
-            "change_type": "1. 원료의약품 명칭변경",
-            "required_docs": [
-                "(S.1.1) 공정서 또는 국제 의약품 일반명 리스트〔The International Nonproprietary Name(INN)〕 등 근거서류.",
-                "개정된 제품정보."
-            ],
-            "report_type": "AR, 연차보고\n「의약품의 품목허가‧신고‧심사 규정」 제3조의2 제2항 및 제4항에 따른 연차보고(Annual Report, AR) 수준의 변경사항입니다."
-        }
-    ]
-
+# step8 → step7 복귀
 def go_back_to_step7():
     st.session_state.step = 7
 
-def generate_pdf(data):
-    pdf = FPDF()
+if st.session_state.step == 8:
+    st.markdown("## Step 8")
+    st.markdown("### 제조방법 변경사항에 따른 신청서")
+    st.write("아래는 선택한 변경사항에 대한 필요서류와 보고유형을 정리한 신청서입니다.")
+    st.markdown("---")
+
+    results = st.session_state.get("step7_results", [])
+
+    for idx, result in enumerate(results, 1):
+        st.markdown(f"#### {idx}. 변경유형: {result['change_type']}")
+        st.markdown("**1. 필요서류**")
+        for doc_idx, doc in enumerate(result["required_docs"], 1):
+            st.markdown(f"{doc_idx}) {doc}")
+        st.markdown("**2. 보고유형**")
+        st.markdown(f"{result['report_type']}")
+        st.markdown("---")
+
+from fpdf import FPDF
+import uuid
+import os
+
+class Step8PDF(FPDF):
+    def header(self):
+        self.set_font("Arial", 'B', 14)
+        self.cell(0, 10, "의약품 제조방법 변경사항 신청서", ln=True, align="C")
+        self.ln(5)
+
+    def chapter_title(self, idx, title):
+        self.set_font("Arial", 'B', 12)
+        self.cell(0, 10, f"{idx}. 변경유형: {title}", ln=True)
+        self.ln(2)
+
+    def requirement_section(self, requirements):
+        self.set_font("Arial", 'B', 11)
+        self.cell(0, 8, "1. 필요서류", ln=True)
+        self.set_font("Arial", '', 11)
+        for i, req in enumerate(requirements, 1):
+            self.multi_cell(0, 7, f"{i}) {req}")
+        self.ln(2)
+
+    def report_section(self, report_text):
+        self.set_font("Arial", 'B', 11)
+        self.cell(0, 8, "2. 보고유형", ln=True)
+        self.set_font("Arial", '', 11)
+        self.multi_cell(0, 7, report_text)
+        self.ln(5)
+
+def generate_step8_pdf(results):
+    pdf = Step8PDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
 
-    pdf.cell(200, 10, txt="의약품 제조방법 변경에 따른 신청양식", ln=True, align='C')
-    pdf.ln(10)
+    for idx, item in enumerate(results, 1):
+        pdf.chapter_title(idx, item['change_type'])
+        pdf.requirement_section(item['required_docs'])
+        pdf.report_section(item['report_type'])
 
-    for idx, item in enumerate(data, 1):
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(200, 10, txt=f"{idx}. 변경유형: {item['change_type']}", ln=True)
-        pdf.set_font("Arial", size=11)
-        pdf.multi_cell(0, 8, f"1. 필요서류:")
-        for doc in item['required_docs']:
-            pdf.multi_cell(0, 8, f"  - {doc}")
-        pdf.ln(1)
-        pdf.multi_cell(0, 8, f"2. 보고유형:\n{item['report_type']}")
-        pdf.ln(10)
-
-    # 파일 저장
     filename = f"/mnt/data/신청양식_{uuid.uuid4().hex}.pdf"
     pdf.output(filename)
     return filename
 
-if st.session_state.step == 8:
-    st.markdown("## Step 8")
-    st.write("Step 8. 제조방법 변경에 따른 신청양식이 아래와 같이 자동으로 생성되었습니다.")
-
-    for idx, result in enumerate(st.session_state.step7_results, 1):
-        st.markdown(f"### {idx}. {result['change_type']}")
-        st.markdown("**1. 필요서류:**")
-        for doc in result['required_docs']:
-            st.write(f"- {doc}")
-        st.markdown("**2. 보고유형:**")
-        st.write(result['report_type'])
-
-    if st.button("PDF로 생성 및 다운로드하기"):
-        pdf_path = generate_pdf(st.session_state.step7_results)
-        with open(pdf_path, "rb") as f:
+    # 이어지는 Step 8 본문 하단에 추가
+    if st.button("📄 PDF로 생성하기"):
+        file_path = generate_step8_pdf(results)
+        with open(file_path, "rb") as f:
             st.download_button(
-                label="PDF 파일 다운로드하기",
+                label="📥 PDF 파일 다운로드",
                 data=f,
-                file_name=os.path.basename(pdf_path),
+                file_name=os.path.basename(file_path),
                 mime="application/pdf"
             )
 
-    st.markdown("---")
-    st.button("이전단계로", on_click=go_back_to_step7)
-
-        
+    col1, col2 = st.columns(2)
+    with col1:
+        st.button("이전단계로", on_click=go_back_to_step7)
+    with col2:
+        st.markdown("👉 PDF를 다운로드 후 인쇄하실 수 있습니다.")
