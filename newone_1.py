@@ -1,17 +1,27 @@
 import streamlit as st
 
-# 상태 초기화
+# ===== 초기 상태 정의 =====
 if "step" not in st.session_state:
     st.session_state.step = 1
+
 if "step1_answer" not in st.session_state:
     st.session_state.step1_answer = None
+if "step2_answer" not in st.session_state:
+    st.session_state.step2_answer = None
+if "step3_answer" not in st.session_state:
+    st.session_state.step3_answer = None
 
-# 다음 단계로 이동 함수
+if "step4_selections" not in st.session_state:
+    st.session_state.step4_selections = {}
+
+if "step5_targets" not in st.session_state:
+    st.session_state.step5_targets = []
+
+# ===== Step1 함수 및 화면 =====
 def go_to_step2():
     if st.session_state.step1_answer == "예":
         st.session_state.step = 2
 
-# STEP 1 화면
 if st.session_state.step == 1:
     st.markdown("## Step 1")
     st.write("제6조제1항에 따라 국제공통기술문서(CTD)로 작성하여 허가를 받거나 신고한 의약품의 제조원 또는 제조방법을 변경하는 경우에 해당한다.")
@@ -28,12 +38,11 @@ if st.session_state.step == 1:
 3.2.S.2, 3.2.S.3 및 3.2.P.2, 3.2.P.3, 3.2.P.4, 3.2.P.7를 제출하여 제조방법 자료로서 심사 받으시기 바랍니다.
 (근거 : 「의약품의 품목허가·신고·심사 규정」제6조(국제공통기술문서 작성) 제1항, 제3조의2(의약품의 허가ㆍ신고의 변경 처리) 제6항)""")
 
-# STEP 2 이동 함수
+# ===== Step2 함수 및 화면 =====
 def go_to_step3():
     if st.session_state.step2_answer == "예":
         st.session_state.step = 3
 
-# STEP 2
 if st.session_state.step == 2:
     st.markdown("## Step 2")
     st.write("제조에 관한 항목 (CTD 제3부 품질평가 자료 중 3.2.S.2, 3.2.S.3 및 3.2.P.2, 3.2.P.3, 3.2.P.4, 3.2.P.7)을 변경 하는 경우에 해당한다.")
@@ -52,12 +61,11 @@ if st.session_state.step == 2:
 가이드라인 적용 대상에 해당하지 않습니다.
 (근거 : 「의약품의 품목허가·신고·심사 규정」[별표 19])""")
 
-# STEP 3 이동 함수
+# ===== Step3 함수 및 화면 =====
 def go_to_step4():
     if st.session_state.step3_answer == "예":
         st.session_state.step = 4
 
-# STEP 3
 if st.session_state.step == 3:
     st.markdown("## Step 3")
     st.write("품목의 허가(신고) 사항 중 제조방법에 해당하는 자료(CTD 제3부 품질평가 자료 중 3.2.S.2, 3.2.S.3 및 3.2.P.2, 3.2.P.3, 3.2.P.4, 3.2.P.7)를 국제공통기술문서(CTD)로서 제출하여 심사받은 ‘제조방법 CTD 적용(또는 전환)’ 품목에 해당한다.")
@@ -73,104 +81,7 @@ if st.session_state.step == 3:
         st.warning("""먼저, CTD 제3부 품질평가 자료 중 3.2.S.2, 3.2.S.3 및 3.2.P.2, 3.2.P.3, 3.2.P.4, 3.2.P.7를 제출하여 제조방법 자료로서 심사 받으시기 바랍니다.  
 (근거 : 「의약품의 품목허가·신고·심사 규정」[별표 19])""")
 
-# Step 4 준비
-if "step4_selections" not in st.session_state:
-    st.session_state.step4_selections = {}
-if "step5_targets" not in st.session_state:
-    st.session_state.step5_targets = []
-
-# Step 4 항목 (프롬프트 문구 그대로)
-step4_items = {
-    "s1": "3.2.S.1 일반정보",
-    "s2": "3.2.S.2 제조",
-    "p1": "3.2.P.1 완제의약품의 성상 및 조성",
-    "p3": "3.2.P.3 제조",
-    "p4": "3.2.P.4 첨가제의 관리",
-    "p7": "3.2.P.7 용기-마개 시스템",
-    "ds": "디자인스페이스(Design Space)"
-}
-
-# Step 3 → Step 4 이동 함수
-def go_to_step4():
-    if st.session_state.step3_answer == "예":
-        st.session_state.step = 4
-
-# Step 4 → Step 5 이동 함수
-def go_to_step5():
-    st.session_state.step5_targets = [
-        code for code, val in st.session_state.step4_selections.items() if val == "변경 있음"
-    ]
-    st.session_state.step = 5
-
-# Step 4 이전단계 복귀 함수
-def go_back_to_step3():
-    st.session_state.step = 3
-
-# Step 4 실행
-if st.session_state.step == 4:
-    st.markdown("## Step 4")
-    st.write("Step 4. 변경사항에 해당하는 상위 항목을 선택하세요.")
-
-    st.markdown("#### 3.2.S 원료의약품")
-    st.session_state.step4_selections["s1"] = st.radio(
-        "3.2.S.1 일반정보",
-        ["변경 있음", "변경 없음"],
-        key="step4_radio_s1"
-    )
-    st.session_state.step4_selections["s2"] = st.radio(
-        "3.2.S.2 제조",
-        ["변경 있음", "변경 없음"],
-        key="step4_radio_s2"
-    )
-
-    st.markdown("#### 3.2.P 완제의약품")
-    st.session_state.step4_selections["p1"] = st.radio(
-        "3.2.P.1 완제의약품의 성상 및 조성",
-        ["변경 있음", "변경 없음"],
-        key="step4_radio_p1"
-    )
-    st.session_state.step4_selections["p3"] = st.radio(
-        "3.2.P.3 제조",
-        ["변경 있음", "변경 없음"],
-        key="step4_radio_p3"
-    )
-    st.session_state.step4_selections["p4"] = st.radio(
-        "3.2.P.4 첨가제의 관리",
-        ["변경 있음", "변경 없음"],
-        key="step4_radio_p4"
-    )
-    st.session_state.step4_selections["p7"] = st.radio(
-        "3.2.P.7 용기-마개 시스템",
-        ["변경 있음", "변경 없음"],
-        key="step4_radio_p7"
-    )
-
-    st.markdown("#### 디자인스페이스")
-    st.session_state.step4_selections["ds"] = st.radio(
-        "디자인스페이스(Design Space)",
-        ["변경 있음", "변경 없음"],
-        key="step4_radio_ds"
-    )
-
-    # 모든 항목 선택 여부 확인
-    all_selected = all(
-        v in ["변경 있음", "변경 없음"]
-        for v in st.session_state.step4_selections.values()
-    )
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.button("이전단계로", on_click=go_back_to_step3)
-    with col2:
-        st.button("다음단계로", on_click=go_to_step5, disabled=not all_selected)
-        
-# Step 5 상태 초기화
-if "step5_selections" not in st.session_state:
-    st.session_state.step5_selections = {}
-if "step6_targets" not in st.session_state:
-    st.session_state.step6_targets = []
-
-# Step 4에서 선택된 항목에 따른 중위항목 정의 (프롬프트 내용 그대로)
+# Step 5 항목 정의 - Step4에서 "변경 있음"을 선택한 상위항목들만 대상
 step5_items = {
     "s1": {
         "title": "3.2.S.1 일반정보",
@@ -187,17 +98,89 @@ step5_items = {
             "5": "5. 원료의약품 또는 중간체의 제조 규모 변경",
             "6": "6. 원료의약품의 제조에 사용되는 원료(출발물질, 중간체, 용매, 시약 등)의 규격변경"
         }
+    },
+    "p1": {
+        "title": "3.2.P.1 완제의약품의 성상 및 조성",
+        "items": {
+            "7": "7. 완제의약품 중 고형 제제의 조성 변경",
+            "8": "8. 고형제제의 코팅층 무게 변경",
+            "9": "9. 완제의약품(고형제제 제외)의 조성 변경",
+            "10": "10. 완제의약품(고형제제 제외)에 쓰이는 착색제 또는 착향제의 종류와 분량의 변경"
+        }
+    },
+    "p3": {
+        "title": "3.2.P.3 제조",
+        "items": {
+            "11": "11. 정성적 또는 정량적인 조성과 평균 질량의 변경이 없는 성상의 변경",
+            "12": "12. 완제의약품 제조공정의 일부 또는 전부에 대한 제조소 추가 또는 변경",
+            "13": "13. 비무균제제의 제조 규모 변경",
+            "14": "14. 무균제제의 제조 규모 변경",
+            "15": "15. 완제의약품의 제조공정 변경"
+        }
+    },
+    "p4": {
+        "title": "3.2.P.4 첨가제의 관리",
+        "items": {
+            "16": "16. 완제의약품 또는 반제품의 제조에 적용되는 공정관리시험 또는 공정관리시험 기준(IPC)의 변경",
+            "17": "17. 첨가제 기원의 변경",
+            "18": "18. 별규에 해당하는 첨가제의 규격 또는 시험방법 변경",
+            "19": "19. 식약처장이 인정하는 공정서 규격으로 첨가제 규격의 변경"
+        }
+    },
+    "p7": {
+        "title": "3.2.P.7 용기-마개 시스템",
+        "items": {
+            "20": "20. 비무균제제의 직접용기 및 포장 재질, 종류 변경",
+            "21": "21. 무균제제의 직접용기 및 포장 재질, 종류 변경",
+            "22": "22. 직접 포장의 규격 변경",
+            "23": "23. 포장단위 변경"
+        }
+    },
+    "ds": {
+        "title": "디자인스페이스(Design Space)",
+        "items": {
+            "24": "24. 새로운 디자인스페이스 도입 또는 허가된 디자인스페이스의 확장"
+        }
     }
 }
 
+# Step 5 → Step 6 이동 함수
 def go_to_step6():
     st.session_state.step6_targets = [
         key for key, val in st.session_state.step5_selections.items() if val == "변경 있음"
     ]
     st.session_state.step = 6
 
+# Step 5 이전단계 복귀 함수
 def go_back_to_step4():
     st.session_state.step = 4
+
+# Step 5 출력 화면
+if st.session_state.step == 5:
+    st.markdown("## Step 5")
+    st.write("Step 5. 변경사항에 해당하는 중위 항목을 선택하세요.")
+
+    for code in st.session_state.step5_targets:
+        section = step5_items[code]
+        st.markdown(f"#### {section['title']}")
+        for item_code, item_label in section["items"].items():
+            key = f"step5_radio_{item_code}"
+            st.session_state.step5_selections[item_code] = st.radio(
+                item_label,
+                ["변경 있음", "변경 없음"],
+                key=key
+            )
+
+    all_selected = all(
+        val in ["변경 있음", "변경 없음"]
+        for val in st.session_state.step5_selections.values()
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.button("이전단계로", on_click=go_back_to_step4)
+    with col2:
+        st.button("다음단계로", on_click=go_to_step6, disabled=not all_selected)
 
 # STEP 5 시작
 if st.session_state.step == 5:
