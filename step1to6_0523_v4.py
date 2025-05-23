@@ -596,30 +596,33 @@ step6_items = {
     }
 }
 
-def go_back_to_step5():
-    st.session_state.step = 5
+if "step6_selections" not in st.session_state:
+    st.session_state.step6_selections = {}
 
-def go_to_next_step6_page():
-    if st.session_state.step6_page < len(st.session_state.step6_targets) - 1:
-        st.session_state.step6_page += 1
+if "step6_page" not in st.session_state:
+    st.session_state.step6_page = 0
 
 def go_to_prev_step6_page():
     if st.session_state.step6_page > 0:
         st.session_state.step6_page -= 1
 
-if "step6_page" not in st.session_state:
-    st.session_state.step6_page = 0
+def go_to_next_step6_page():
+    if st.session_state.step6_page < len(st.session_state.step6_targets) - 1:
+        st.session_state.step6_page += 1
+
+def go_back_to_step5():
+    st.session_state.step = 5
+
+def go_to_step7():
+    st.session_state.step = 7
 
 if st.session_state.step == 6:
     st.markdown("## Step 6")
-    st.write("Step5에서 '변경 있음'으로 선택된 항목에 대해 하위항목과 충족요건을 모두 선택하세요.")
+    st.write("Step 6. Step5에서 '변경 있음'으로 선택된 항목에 대해 하위항목과 충족요건을 모두 선택하세요.")
 
     targets = st.session_state.step6_targets
-    total_pages = len(targets)
-
-    if total_pages == 0:
-        st.warning("Step5에서 '변경 있음'으로 선택된 항목이 없습니다.")
-
+    if not targets:
+        st.warning("Step5에서 선택된 항목이 없습니다.")
     else:
         current_key = targets[st.session_state.step6_page]
         block = step6_items.get(current_key)
@@ -635,6 +638,7 @@ if st.session_state.step == 6:
                 "16b": "16a",
             }
 
+            # 하위항목
             for sub_key, sub_text in block.get("subitems", {}).items():
                 full_key = f"{current_key}_sub_{sub_key}"
 
@@ -645,6 +649,7 @@ if st.session_state.step == 6:
                 elif sub_key in sync_pairs:
                     other = sync_pairs[sub_key]
                     other_key = f"{current_key}_sub_{other}"
+
                     current_value = st.session_state.step6_selections.get(full_key, "변경 없음")
                     current_value = st.radio(
                         sub_text,
@@ -652,6 +657,7 @@ if st.session_state.step == 6:
                         key=full_key,
                         index=0 if current_value == "변경 있음" else 1
                     )
+
                     st.session_state.step6_selections[full_key] = current_value
                     st.session_state.step6_selections[other_key] = current_value
 
@@ -662,12 +668,28 @@ if st.session_state.step == 6:
                         key=full_key
                     )
 
-        # 버튼 처리
+            # 충족요건
+            for req_key, req_text in block.get("requirements", {}).items():
+                full_key = f"{current_key}_req_{req_key}"
+                label = f"{req_key}. {req_text}"
+                st.session_state.step6_selections[full_key] = st.radio(
+                    label,
+                    ["충족", "미충족"],
+                    key=full_key
+                )
+
+        else:
+            st.warning("해당 항목 정보를 찾을 수 없습니다.")
+
+        # 하단 버튼 영역
         col1, col2 = st.columns(2)
         with col1:
-            st.button("이전단계로", on_click=go_back_to_step5 if st.session_state.step6_page == 0 else go_to_prev_step6_page)
+            st.button(
+                "이전단계로",
+                on_click=go_back_to_step5 if st.session_state.step6_page == 0 else go_to_prev_step6_page
+            )
         with col2:
-            if st.session_state.step6_page < total_pages - 1:
-                st.button("다음항목 선택하기", on_click=go_to_next_step6_page)
-            else:
+            if st.session_state.step6_page == len(st.session_state.step6_targets) - 1:
                 st.button("결과 확인하기", on_click=go_to_step7)
+            else:
+                st.button("다음항목 선택하기", on_click=go_to_next_step6_page)
