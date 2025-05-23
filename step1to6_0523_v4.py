@@ -619,6 +619,7 @@ if st.session_state.step == 6:
 
     if total_pages == 0:
         st.warning("Step5에서 '변경 있음'으로 선택된 항목이 없습니다.")
+
     else:
         current_key = targets[st.session_state.step6_page]
         block = step6_items.get(current_key)
@@ -626,50 +627,40 @@ if st.session_state.step == 6:
         if block:
             st.markdown(f"### {block['title']}")
 
-# 자동 동기화 쌍 정의
-sync_pairs = {
-    "12c1": "12c2",
-    "12c2": "12c1",
-    "16a": "16b",
-    "16b": "16a",
-}
+            # 자동 동기화 쌍 정의
+            sync_pairs = {
+                "12c1": "12c2",
+                "12c2": "12c1",
+                "16a": "16b",
+                "16b": "16a",
+            }
 
-for sub_key, sub_text in block.get("subitems", {}).items():
-    full_key = f"{current_key}_sub_{sub_key}"
+            for sub_key, sub_text in block.get("subitems", {}).items():
+                full_key = f"{current_key}_sub_{sub_key}"
 
-    # Title 15번 (p3_15)은 무조건 '변경 있음' 고정
-    if current_key == "p3_15":
-        st.session_state.step6_selections[full_key] = "변경 있음"
-        st.radio(sub_text, ["변경 있음"], index=0, key=full_key, disabled=True)
+                if current_key == "p3_15":
+                    st.session_state.step6_selections[full_key] = "변경 있음"
+                    st.radio(sub_text, ["변경 있음"], index=0, key=full_key, disabled=True)
 
-    # 자동 연동되는 항목 처리
-    elif sub_key in sync_pairs:
-        other = sync_pairs[sub_key]
-        other_key = f"{current_key}_sub_{other}"
+                elif sub_key in sync_pairs:
+                    other = sync_pairs[sub_key]
+                    other_key = f"{current_key}_sub_{other}"
+                    current_value = st.session_state.step6_selections.get(full_key, "변경 없음")
+                    current_value = st.radio(
+                        sub_text,
+                        ["변경 있음", "변경 없음"],
+                        key=full_key,
+                        index=0 if current_value == "변경 있음" else 1
+                    )
+                    st.session_state.step6_selections[full_key] = current_value
+                    st.session_state.step6_selections[other_key] = current_value
 
-        # 우선 현재 값 가져오기
-        current_value = st.session_state.step6_selections.get(full_key, "변경 없음")
-        other_value = st.session_state.step6_selections.get(other_key, "변경 없음")
-
-        # 기본 라디오 생성
-        current_value = st.radio(
-            sub_text,
-            ["변경 있음", "변경 없음"],
-            key=full_key,
-            index=0 if current_value == "변경 있음" else 1
-        )
-
-        # 동기화 처리
-        st.session_state.step6_selections[full_key] = current_value
-        st.session_state.step6_selections[other_key] = current_value  # 즉시 반영
-
-    # 일반 항목
-    else:
-        st.session_state.step6_selections[full_key] = st.radio(
-            sub_text,
-            ["변경 있음", "변경 없음"],
-            key=full_key
-        )
+                else:
+                    st.session_state.step6_selections[full_key] = st.radio(
+                        sub_text,
+                        ["변경 있음", "변경 없음"],
+                        key=full_key
+                    )
 
         # 버튼 처리
         col1, col2 = st.columns(2)
