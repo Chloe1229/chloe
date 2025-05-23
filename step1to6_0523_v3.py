@@ -626,33 +626,50 @@ if st.session_state.step == 6:
         if block:
             st.markdown(f"### {block['title']}")
 
-            # 하위항목
-            for sub_key, sub_text in block.get("subitems", {}).items():
-                full_key = f"{current_key}_sub_{sub_key}"
+# 자동 동기화 쌍 정의
+sync_pairs = {
+    "12c1": "12c2",
+    "12c2": "12c1",
+    "16a": "16b",
+    "16b": "16a",
+}
 
-                if current_key == "p3_15":
-                    st.session_state.step6_selections[full_key] = "변경 있음"
-                    st.radio(sub_text, ["변경 있음"], index=0, key=full_key, disabled=True)
-                elif sub_key in ["12c1", "12c2", "16a", "16b"]:
-                    other = {"12c1": "12c2", "12c2": "12c1", "16a": "16b", "16b": "16a"}[sub_key]
-                    other_key = f"{current_key}_sub_{other}"
-                    current_value = st.radio(sub_text, ["변경 있음", "변경 없음"], key=full_key)
-                    st.session_state.step6_selections[full_key] = current_value
-                    st.session_state.step6_selections[other_key] = current_value
-                else:
-                    st.session_state.step6_selections[full_key] = st.radio(
-                        sub_text, ["변경 있음", "변경 없음"], key=full_key
-                    )
+for sub_key, sub_text in block.get("subitems", {}).items():
+    full_key = f"{current_key}_sub_{sub_key}"
 
-            # 충족요건
-            for req_key, req_text in block.get("requirements", {}).items():
-                full_key = f"{current_key}_req_{req_key}"
-                label = f"{req_key}. {req_text}"
-                st.session_state.step6_selections[full_key] = st.radio(
-                    label, ["충족", "미충족"], key=full_key
-                )
-        else:
-            st.warning(f"선택된 항목 {current_key}에 대한 정보가 존재하지 않습니다.")
+    # Title 15번 (p3_15)은 무조건 '변경 있음' 고정
+    if current_key == "p3_15":
+        st.session_state.step6_selections[full_key] = "변경 있음"
+        st.radio(sub_text, ["변경 있음"], index=0, key=full_key, disabled=True)
+
+    # 자동 연동되는 항목 처리
+    elif sub_key in sync_pairs:
+        other = sync_pairs[sub_key]
+        other_key = f"{current_key}_sub_{other}"
+
+        # 우선 현재 값 가져오기
+        current_value = st.session_state.step6_selections.get(full_key, "변경 없음")
+        other_value = st.session_state.step6_selections.get(other_key, "변경 없음")
+
+        # 기본 라디오 생성
+        current_value = st.radio(
+            sub_text,
+            ["변경 있음", "변경 없음"],
+            key=full_key,
+            index=0 if current_value == "변경 있음" else 1
+        )
+
+        # 동기화 처리
+        st.session_state.step6_selections[full_key] = current_value
+        st.session_state.step6_selections[other_key] = current_value  # 즉시 반영
+
+    # 일반 항목
+    else:
+        st.session_state.step6_selections[full_key] = st.radio(
+            sub_text,
+            ["변경 있음", "변경 없음"],
+            key=full_key
+        )
 
         # 버튼 처리
         col1, col2 = st.columns(2)
