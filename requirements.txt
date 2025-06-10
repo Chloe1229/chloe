@@ -1,3 +1,7 @@
 streamlit
 pandas
 numpy
+openpyxl
+python-docx
+reportlab
+docx2pdf
